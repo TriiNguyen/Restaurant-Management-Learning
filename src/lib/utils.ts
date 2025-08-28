@@ -34,3 +34,13 @@ export const handleErrorApi = ({
     toast.error(error?.payload?.message ?? "Lỗi không xác định");
   }
 };
+
+const isBrowser = typeof window !== "undefined";
+
+export const getAccessTokenFromLocalStorage = () => {
+  return isBrowser ? localStorage.getItem("accessToken") : null;
+};
+
+export const getRefreshTokenFromLocalStorage = () => {
+  return isBrowser ? localStorage.getItem("refreshToken") : null;
+};
