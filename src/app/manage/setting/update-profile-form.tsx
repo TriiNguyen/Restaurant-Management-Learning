@@ -13,12 +13,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form, FormField, FormItem, FormMessage } from "@/components/ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useAccountProfile } from "@/queries/useAccount";
+import { useAccountMe, useUpdateMeMutation } from "@/queries/useAccount";
+import { useUploadMediaMutation } from "@/queries/useMedia";
+import { toast } from "sonner";
+import { handleErrorApi } from "@/lib/utils";
 
 export default function UpdateProfileForm() {
   const [file, setFile] = useState<File | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
-  const { data: account } = useAccountProfile();
+
+  const { data: account, refetch } = useAccountMe();
+  const updateMeMutation = useUpdateMeMutation();
+  const uploadMediaMutation = useUploadMediaMutation();
+
   const form = useForm<UpdateMeBodyType>({
     resolver: zodResolver(UpdateMeBody),
     defaultValues: {
@@ -26,8 +33,10 @@ export default function UpdateProfileForm() {
       avatar: "",
     },
   });
+
   const avatar = form.watch("avatar");
   const name = form.watch("name");
+
   useEffect(() => {
     if (account) {
       form.reset({
@@ -36,17 +45,47 @@ export default function UpdateProfileForm() {
       });
     }
   }, [account, form]);
+
   const previewAvatarFromFile = useMemo(() => {
     if (file) {
       return URL.createObjectURL(file);
     }
     return avatar;
   }, [file, avatar]);
+
+  const resetForm = () => {
+    form.reset();
+    setFile(null);
+  };
+
+  const onSubmit = async (data: UpdateMeBodyType) => {
+    if (updateMeMutation.isPending) return;
+    try {
+      let body = data;
+      if (file) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const imageResult = await uploadMediaMutation.mutateAsync(formData);
+        body = {
+          ...data,
+          avatar: imageResult.payload.data,
+        };
+        const result = await updateMeMutation.mutateAsync(body);
+        toast.success(result.payload.message);
+        refetch();
+      }
+    } catch (error) {
+      handleErrorApi({ error, setError: form.setError });
+    }
+  };
+
   return (
     <Form {...form}>
       <form
         noValidate
         className="grid auto-rows-max items-start gap-4 md:gap-8"
+        onReset={resetForm}
+        onSubmit={form.handleSubmit(onSubmit)}
       >
         <Card x-chunk="dashboard-07-chunk-0">
           <CardHeader>
