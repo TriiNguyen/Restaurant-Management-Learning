@@ -16,6 +16,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
 import { handleErrorApi } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 export default function LoginForm() {
   const form = useForm<LoginBodyType>({
@@ -27,12 +28,13 @@ export default function LoginForm() {
   });
 
   const { mutateAsync: loginMutation, isPending } = useLoginMutation();
-
+  const router = useRouter();
   const onSubmit = async (data: LoginBodyType) => {
     if (isPending) return;
     try {
-      const result = await loginMutation(data);
+      await loginMutation(data);
       toast.success("Đăng nhập thành công");
+      router.push("/manage/dashboard");
     } catch (error) {
       handleErrorApi({ error, setError: form.setError });
     }
