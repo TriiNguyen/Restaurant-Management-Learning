@@ -14,7 +14,9 @@ export function middleware(request: NextRequest) {
     privatePaths.some((path) => request.nextUrl.pathname.startsWith(path)) &&
     !refreshToken
   ) {
-    return NextResponse.redirect(new URL("/logout", request.url));
+    const url = new URL("/login", request.url);
+    url.searchParams.set("clearToken", "true");
+    return NextResponse.redirect(url);
   }
 
   // Đăng nhập rồi thì không cho vào unAuth paths (login nữa)

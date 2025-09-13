@@ -19,6 +19,8 @@ export default function RefreshTokenPage() {
           router.push(redirectUrl || "/");
         },
       });
+    } else {
+      router.push("/");
     }
     return;
   }, [refreshToken, redirectUrl, router]);

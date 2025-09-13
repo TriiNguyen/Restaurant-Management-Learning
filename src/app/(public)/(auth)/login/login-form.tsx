@@ -16,7 +16,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useLoginMutation } from "@/queries/useAuth";
 import { toast } from "sonner";
 import { handleErrorApi } from "@/lib/utils";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
+import { useAppContext } from "@/components/app-provider";
 
 export default function LoginForm() {
   const form = useForm<LoginBodyType>({
@@ -26,9 +28,16 @@ export default function LoginForm() {
       password: "",
     },
   });
-
+  const { setIsAuth } = useAppContext();
   const { mutateAsync: loginMutation, isPending } = useLoginMutation();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const clearToken = searchParams.get("clearToken");
+  useEffect(() => {
+    if (clearToken) {
+      setIsAuth(false);
+    }
+  }, [clearToken, setIsAuth]);
   const onSubmit = async (data: LoginBodyType) => {
     if (isPending) return;
     try {
